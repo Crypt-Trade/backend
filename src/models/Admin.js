@@ -11,7 +11,15 @@ const adminSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  walletBalance: { type: Number, default: 0 }
+  walletBalance: { type: Number, default: 0 },
+
+  walletHistory: [
+    {
+      amount: Number,
+      date: String,
+      time: String
+    }
+  ]
 });
 
 // Hash password before saving to DB

@@ -57,8 +57,48 @@ async function loginAdmin(req, res) {
     }
 }
 
+async function addWalletBalance(req, res) {
+    try {
+        const { email, password, amount } = req.body;
+
+        if (!email || !password || !amount) {
+            return res.status(400).json({ message: "All fields are required." });
+        }
+
+        const admin = await Admin.findOne({ email });
+
+        if (!admin) {
+            return res.status(404).json({ message: "Admin not found." });
+        }
+
+        const isMatch = await admin.comparePassword(password);
+        if (!isMatch) {
+            return res.status(401).json({ message: "Incorrect password." });
+        }
+
+        const now = new Date();
+        const date = now.toISOString().split('T')[0]; // YYYY-MM-DD
+        const time = now.toTimeString().split(' ')[0]; // HH:MM:SS
+
+        admin.walletBalance += parseFloat(amount);
+        admin.walletHistory.push({ amount: parseFloat(amount), date, time });
+
+        await admin.save();
+
+        res.status(200).json({
+            message: "Wallet balance updated successfully.",
+            walletBalance: admin.walletBalance,
+            walletHistory: admin.walletHistory
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+
 
 module.exports = {
     registerAdmin,
-    loginAdmin
+    loginAdmin,
+    addWalletBalance
 };
