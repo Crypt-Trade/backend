@@ -91,5 +91,14 @@ async function getAllOrders(req, res) {
     }
 }
 
+async function getAprrovedOrders(req, res) {
+    try {
+        const orders = await UserOrders.find({status:"approved"}); // Fetch all orders
+        res.status(200).json({ success: true, orders });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+}
 
-module.exports = { createOrder, updateOrderStatus, getAllOrders };
+
+module.exports = { createOrder, updateOrderStatus, getAllOrders, getAprrovedOrders };
