@@ -1,5 +1,6 @@
 const UserOrders = require("../models/UserOrders");
 const User = require("../models/User");
+const Topup = require('../models/Topup');
 const { addPersonalPoints, addPointsToAncestors } = require("../controllers/walletController");
 const { s3Client, PutObjectCommand } = require('../utils/s3Bucket');
 
@@ -68,6 +69,24 @@ async function updateOrderStatus(req, res) {
         // Assign points
         await addPersonalPoints(user, order_price);
         await addPointsToAncestors(user, order_price);
+
+
+        // 5. Deduct from Topup user's wallet balance
+        const topupUser = await Topup.findOne(); // use correct identifier
+        if (!topupUser) {
+            return res.status(404).json({ message: "Topup user not found" });
+        }
+
+        const amount = parseFloat(order_price);
+        if (topupUser.walletBalance < amount) {
+            return res.status(400).json({ message: "Insufficient wallet balance in topup account." });
+        }
+
+        // Deduct and log history
+        topupUser.walletBalance -= amount;
+
+        await topupUser.save();
+
 
         res.json({ message: "Order status updated and points assigned successfully", order });
 
