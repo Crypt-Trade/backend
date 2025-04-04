@@ -14,7 +14,7 @@ async function generateUniqueSponsorID() {
 
     while (!isUnique) {
         randomNumber = generateRandom7DigitNumber();
-        const existingUser = await User.findOne({ sponsorId: `UD${randomNumber}` });
+        const existingUser = await User.findOne({ sponsorId: `CT${randomNumber}` });
         if (!existingUser) {
             isUnique = true;
         }
