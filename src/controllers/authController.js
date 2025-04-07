@@ -115,8 +115,8 @@ async function handleRegisterFirstUser(req, res) {
 
             // First user registration (admin/root user)
             let generatedSponsorId = await generateUniqueSponsorID();
-            const leftRefferalLink = `https://myudbhab.in/signupleft/${generatedSponsorId}`;
-            const rightRefferalLink = `https://myudbhab.in/signupright/${generatedSponsorId}`;
+            const leftRefferalLink = `https://cryptrade.biz/userdashboard/signupleft/${generatedSponsorId}`;
+            const rightRefferalLink = `https://cryptrade.biz/userdashboard/signupright/${generatedSponsorId}`;
 
             // Generate a unique 5-digit key
             const uniqueKey = await generateUniqueKey();

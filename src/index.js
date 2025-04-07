@@ -9,6 +9,8 @@ const orderRoutes = require("./routes/orderRoutes");
 const topupRoutes = require("./routes/topupRoutes");
 const contactformRoutes = require("./routes/contactformRoutes");
 const payoutRoutes = require("./routes/payoutRoutes");
+const userRoutes = require("./routes/userroute");
+const walletRoutes = require("./routes/walletRoutes");
 
 connectDB();
 const app = express();
@@ -22,6 +24,8 @@ app.use('/order', orderRoutes);
 app.use('/topup', topupRoutes);
 app.use('/contact', contactformRoutes);
 app.use('/payout', payoutRoutes);
+app.use('/user', userRoutes);
+app.use('/wallet', walletRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT}`));

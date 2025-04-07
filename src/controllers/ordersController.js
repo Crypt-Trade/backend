@@ -56,6 +56,18 @@ async function updateOrderStatus(req, res) {
             return res.status(404).json({ message: "Order not found" });
         }
 
+        const amount = parseFloat(order_price);
+
+        // 2. Find the Topup user and check balance
+        const topupUser = await Topup.findOne(); // Use specific identifier if needed
+        if (!topupUser) {
+            return res.status(404).json({ message: "Topup user not found" });
+        }
+
+        if (topupUser.walletBalance < amount) {
+            return res.status(400).json({ message: "Insufficient wallet balance in topup account." });
+        }
+
         // Update the status field
         order.status = "approved";
         await order.save();
@@ -72,15 +84,15 @@ async function updateOrderStatus(req, res) {
 
 
         // 5. Deduct from Topup user's wallet balance
-        const topupUser = await Topup.findOne(); // use correct identifier
-        if (!topupUser) {
-            return res.status(404).json({ message: "Topup user not found" });
-        }
+        // const topupUser = await Topup.findOne(); // use correct identifier
+        // if (!topupUser) {
+        //     return res.status(404).json({ message: "Topup user not found" });
+        // }
 
-        const amount = parseFloat(order_price);
-        if (topupUser.walletBalance < amount) {
-            return res.status(400).json({ message: "Insufficient wallet balance in topup account." });
-        }
+        // const amount = parseFloat(order_price);
+        // if (topupUser.walletBalance < amount) {
+        //     return res.status(400).json({ message: "Insufficient wallet balance in topup account." });
+        // }
 
         // Deduct and log history
         topupUser.walletBalance -= amount;
@@ -112,7 +124,7 @@ async function getAllOrders(req, res) {
 
 async function getAprrovedOrders(req, res) {
     try {
-        const orders = await UserOrders.find({status:"approved"}); // Fetch all orders
+        const orders = await UserOrders.find({ status: "approved" }); // Fetch all orders
         res.status(200).json({ success: true, orders });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

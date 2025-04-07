@@ -64,4 +64,30 @@ const calculateWeekelyPayout = async () => {
     }
 };
 
-module.exports = { calculateWeekelyPayout };
+
+async function getWeeklyEarningsByUserId(req, res) {
+    try {
+        const { userId } = req.body;
+    
+        if (!userId) {
+          return res.status(400).json({ message: "userId is required." });
+        }
+    
+        const wallet = await WalletPoints.findOne({ userId });
+    
+        if (!wallet) {
+          return res.status(404).json({ message: "Wallet data not found for this user." });
+        }
+    
+        res.status(200).json({
+          message: "Weekly earnings fetched successfully.",
+          weeklyEarnings: wallet.weeklyEarnings
+        });
+    
+      } catch (error) {
+        res.status(500).json({ message: error.message });
+      }
+}
+
+
+module.exports = { calculateWeekelyPayout, getWeeklyEarningsByUserId };
