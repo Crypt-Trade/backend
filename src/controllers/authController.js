@@ -20,7 +20,7 @@ async function generateUniqueSponsorID() {
         }
     }
 
-    return `UD${randomNumber}`;
+    return `CT${randomNumber}`;
 }
 
 // Function to generate random 7-digit number
@@ -138,6 +138,8 @@ async function handleRegisterFirstUser(req, res) {
             // Initialize WalletPoints schema for the first user
             const walletPoints = new WalletPoints({
                 userId: newUser._id,
+                name: name,
+                mySponsorId: generatedSponsorId,
                 personalPoints: 0, // Initial points set to zero
                 totalPoints: { leftPoints: 0, rightPoints: 0 },
                 currentWeekPoints: { leftPoints: 0, rightPoints: 0 },
@@ -199,8 +201,8 @@ async function handleRegisterUser(req, res) {
 
         // Generate a unique mySponsorId
         let generatedSponsorId = await generateUniqueSponsorID();
-        const leftRefferalLink = `http://localhost:5173/signupleft/${generatedSponsorId}`;
-        const rightRefferalLink = `http://localhost:5173/signupright/${generatedSponsorId}`;
+        const leftRefferalLink = `https://cryptrade.biz/userdashboard/signupleft/${generatedSponsorId}`;
+        const rightRefferalLink = `https://cryptrade.biz/userdashboard/signupright/${generatedSponsorId}`;
 
         // Generate a unique 5-digit key
         const uniqueKey = await generateUniqueKey();
@@ -222,6 +224,8 @@ async function handleRegisterUser(req, res) {
         // Initialize WalletPoints schema for the first user
         const walletPoints = new WalletPoints({
             userId: newUser._id,
+            name: name,
+            mySponsorId: generatedSponsorId,
             personalPoints: 0, // Initial points set to zero
             totalPoints: { leftPoints: 0, rightPoints: 0 },
             currentWeekPoints: { leftPoints: 0, rightPoints: 0 },
@@ -294,8 +298,8 @@ async function handleRegisterUsingLeftLink(req, res) {
 
         // Generate a unique mySponsorId
         let generatedSponsorId = await generateUniqueSponsorID();
-        const leftRefferalLink = `https://myudbhab.in/signupleft/${generatedSponsorId}`;
-        const rightRefferalLink = `https://myudbhab.in/signupright/${generatedSponsorId}`;
+        const leftRefferalLink = `https://cryptrade.biz/userdashboard/signupleft/${generatedSponsorId}`;
+        const rightRefferalLink = `https://cryptrade.biz/userdashboard/signupright/${generatedSponsorId}`;
 
         // Generate a unique 5-digit key
         const uniqueKey = await generateUniqueKey();
@@ -317,6 +321,8 @@ async function handleRegisterUsingLeftLink(req, res) {
         // Initialize WalletPoints schema for the first user
         const walletPoints = new WalletPoints({
             userId: newUser._id,
+            name: name,
+            mySponsorId: generatedSponsorId,
             personalPoints: 0, // Initial points set to zero
             totalPoints: { leftPoints: 0, rightPoints: 0 },
             currentWeekPoints: { leftPoints: 0, rightPoints: 0 },
@@ -374,8 +380,8 @@ async function handleRegisterUsingRightLink(req, res) {
 
         // Generate a unique mySponsorId
         let generatedSponsorId = await generateUniqueSponsorID();
-        const leftRefferalLink = `https://myudbhab.in/signupleft/${generatedSponsorId}`;
-        const rightRefferalLink = `https://myudbhab.in/signupright/${generatedSponsorId}`;
+        const leftRefferalLink = `https://cryptrade.biz/userdashboard/signupleft/${generatedSponsorId}`;
+        const rightRefferalLink = `https://cryptrade.biz/userdashboard/signupright/${generatedSponsorId}`;
 
         // Generate a unique 5-digit key
         const uniqueKey = await generateUniqueKey();
@@ -397,6 +403,8 @@ async function handleRegisterUsingRightLink(req, res) {
         // Initialize WalletPoints schema for the first user
         const walletPoints = new WalletPoints({
             userId: newUser._id,
+            name: name,
+            mySponsorId: generatedSponsorId,
             personalPoints: 0, // Initial points set to zero
             totalPoints: { leftPoints: 0, rightPoints: 0 },
             currentWeekPoints: { leftPoints: 0, rightPoints: 0 },

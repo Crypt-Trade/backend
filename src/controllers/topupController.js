@@ -1,5 +1,6 @@
 const Topup = require('../models/Topup');
 const Admin = require('../models/Admin');
+const bcrypt = require("bcrypt");
 
 // Register Topup User
 
@@ -55,19 +56,21 @@ async function transferFromAdminToTopup(req, res) {
       return res.status(400).json({ message: "All fields are required." });
     }
 
-    const topupUser = await Topup.findOne({ email: topupEmail });
-    if (!topupUser) {
-      return res.status(404).json({ message: "Topup user not found." });
-    }
-
-    if (topupUser.password !== topupPassword) {
-      return res.status(401).json({ message: "Incorrect Topup user password." });
-    }
-
-    // Fetch admin (assuming only one admin)
-    const admin = await Admin.findOne();
+    const admin = await Admin.findOne({ email: topupEmail });
     if (!admin) {
       return res.status(404).json({ message: "Admin not found." });
+    }
+
+    const isMatch = await admin.comparePassword(topupPassword);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Incorrect password." });
+    }
+
+
+    // Fetch admin (assuming only one admin)
+    const topupUser = await Topup.findOne();
+    if (!topupUser) {
+      return res.status(404).json({ message: "Topup User not found." });
     }
 
     if (admin.walletBalance < amount) {
@@ -97,13 +100,7 @@ async function transferFromAdminToTopup(req, res) {
 
 async function getTopupWalletHistory(req, res) {
   try {
-    const { email } = req.body;
-
-    if (!email) {
-      return res.status(400).json({ message: "Email is required." });
-    }
-
-    const topupUser = await Topup.findOne({ email });
+    const topupUser = await Topup.findOne(); // Finds the first (and only) topup user
 
     if (!topupUser) {
       return res.status(404).json({ message: "Topup user not found." });

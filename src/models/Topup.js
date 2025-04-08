@@ -18,7 +18,6 @@ const topupSchema = new mongoose.Schema({
     {
       amount: Number,
       date: String,
-      time: String
     }
   ]
 });

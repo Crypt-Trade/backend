@@ -11,6 +11,7 @@ const contactformRoutes = require("./routes/contactformRoutes");
 const payoutRoutes = require("./routes/payoutRoutes");
 const userRoutes = require("./routes/userroute");
 const walletRoutes = require("./routes/walletRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
 
 connectDB();
 const app = express();
@@ -26,6 +27,7 @@ app.use('/contact', contactformRoutes);
 app.use('/payout', payoutRoutes);
 app.use('/user', userRoutes);
 app.use('/wallet', walletRoutes);
+app.use('/dashboard', dashboardRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT}`));

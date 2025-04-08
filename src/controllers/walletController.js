@@ -239,6 +239,41 @@ const handleGetAllNonVerifiedKycUsers = async (req, res) => {
   }
 };
 
+async function getRejectedWalletUsers(req, res) {
+  try {
+    const rejectedUsers = await WalletDetails.find({ walletApproved: "rejected" });
+
+    if (rejectedUsers.length === 0) {
+      return res.status(404).json({ message: "No users found with rejected wallet status." });
+    }
+
+    res.status(200).json({
+      message: "Rejected wallet users fetched successfully.",
+      rejectedUsers,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
+async function getApprovedWalletUsers(req, res) {
+  try {
+    const approvedUsers = await WalletDetails.find({ walletApproved: "verified" });
+
+    if (approvedUsers.length === 0) {
+      return res.status(404).json({ message: "No users found with approved wallet status." });
+    }
+
+    res.status(200).json({
+      message: "Approved wallet users fetched successfully.",
+      approvedUsers,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
+
 module.exports = {
   addPersonalPoints,
   checkIfInLeftTree,
@@ -248,4 +283,6 @@ module.exports = {
   handleVerifyWalletDetails,
   handleRejectKYCDetails,
   handleGetAllNonVerifiedKycUsers,
+  getRejectedWalletUsers,
+  getApprovedWalletUsers
 };

@@ -5,6 +5,6 @@ const { registerTopup, loginTopup, transferFromAdminToTopup, getTopupWalletHisto
 router.post("/register", registerTopup);
 router.post("/login", loginTopup);
 router.post("/transfer", transferFromAdminToTopup);
-router.post("/wallet-history", getTopupWalletHistory);
+router.get("/wallet-history", getTopupWalletHistory);
 
 module.exports = router;

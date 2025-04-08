@@ -6,6 +6,14 @@ const walletPointsSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
+  name: {
+    type: String, // Preferred Customer Name
+    required: true,
+  },
+  mySponsorId: {
+    type: String,
+    required: true,
+  },
   personalPoints: {
     type: Number,
     default: 0
@@ -45,7 +53,7 @@ const walletPointsSchema = new mongoose.Schema({
     {
       month: { type: Date, required: true },
       payoutAmount: { type: Number, default: 0 },
-      weeklyDetails: [  
+      weeklyDetails: [
         {
           week: { type: Date, required: true },
           payoutAmount: { type: Number, required: true }

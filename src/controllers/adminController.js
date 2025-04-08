@@ -1,6 +1,7 @@
 const Admin = require('../models/Admin');
 const jwt = require('jsonwebtoken');
 const generateToken = require('../utils/generateToken');
+const WalletPoints = require("../models/WalletPoints");
 
 // Admin Registration
 async function registerAdmin(req, res) {
@@ -95,10 +96,49 @@ async function addWalletBalance(req, res) {
     }
 }
 
+async function getAdminWalletHistory(req, res) {
+  try {
+    const adminUser = await Admin.findOne(); // Finds the first (and only) topup user
+
+    if (!adminUser) {
+      return res.status(404).json({ message: "Topup user not found." });
+    }
+
+    res.status(200).json({
+      message: "Wallet history fetched successfully.",
+      walletHistory: adminUser.walletHistory
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
+//all users all weekly earnings.
+async function getAllWeeklyEarnings(req, res) {
+    try {
+      const wallets = await WalletPoints.find({}, { mySponsorId: 1, weeklyEarnings: 1, _id: 0 });
+  
+      if (!wallets || wallets.length === 0) {
+        return res.status(404).json({ message: "No weekly earnings data found." });
+      }
+  
+      res.status(200).json({
+        message: "All users' weekly earnings fetched successfully.",
+        data: wallets
+      });
+  
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+
 
 
 module.exports = {
     registerAdmin,
     loginAdmin,
-    addWalletBalance
+    addWalletBalance,
+    getAdminWalletHistory,
+    getAllWeeklyEarnings
 };
