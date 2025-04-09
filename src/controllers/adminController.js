@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const generateToken = require('../utils/generateToken');
 const WalletPoints = require("../models/WalletPoints");
 const WithdrawalOrders = require('../models/WithdrawalOrders');
+const User = require('../models/User');
 
 // Admin Registration
 async function registerAdmin(req, res) {
@@ -153,6 +154,50 @@ async function getAllWithdrawalOrders(req, res) {
   }
 }
 
+//withdrawal orders status update
+async function updateWithdrawalOrderStatus(req, res) {
+  try {
+    const { user_mySponsor_id, order_no, amount, status } = req.body;
+
+    if (!user_mySponsor_id || !order_no || !amount || !status) {
+      return res.status(400).json({ message: "All fields are required." });
+    }
+
+    // Find the specific withdrawal order
+    const order = await WithdrawalOrders.findOne({
+      "user_details.user_mySponsor_id": user_mySponsor_id,
+      "order_details.order_no": order_no
+    });
+
+    if (!order) {
+      return res.status(404).json({ message: "Withdrawal order not found." });
+    }
+
+    if (Number(order.order_details.withdrawal_amount) !== Number(amount)) {
+      return res.status(400).json({ message: "Amount mismatch." });
+    }
+
+    // Update the status
+    order.status = status;
+    await order.save();
+
+    if (status == "approved") {
+      // Deduct amount
+      const wallet = await WalletPoints.findOne({ mySponsorId: user_mySponsor_id });
+      wallet.walletBalance -= amount;
+      await wallet.save();
+    }
+
+    res.status(200).json({
+      message: "Withdrawal order status updated successfully.",
+      updatedOrder: order
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
 
 module.exports = {
   registerAdmin,
@@ -160,5 +205,6 @@ module.exports = {
   addWalletBalance,
   getAdminWalletHistory,
   getAllWeeklyEarnings,
-  getAllWithdrawalOrders
+  getAllWithdrawalOrders,
+  updateWithdrawalOrderStatus
 };

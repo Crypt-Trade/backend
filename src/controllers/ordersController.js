@@ -68,15 +68,23 @@ async function updateOrderStatus(req, res) {
             return res.status(400).json({ message: "Insufficient wallet balance in topup account." });
         }
 
-        // Update the status field
-        order.status = "approved";
-        await order.save();
+        // // Update the status field
+        // order.status = "approved";
+        // await order.save();
 
         // Fetch the user using mySponsorId
         const user = await User.findOne({ mySponsorId });
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
+
+        // Update the status field
+        order.status = "approved";
+        await order.save();
+
+        user.isActive = true;
+        user.activeDate = new Date();
+        user.subcription = order.package_name;
 
         // Assign points
         await addPersonalPoints(user, order_price);
