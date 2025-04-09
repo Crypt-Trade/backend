@@ -2,98 +2,99 @@ const Admin = require('../models/Admin');
 const jwt = require('jsonwebtoken');
 const generateToken = require('../utils/generateToken');
 const WalletPoints = require("../models/WalletPoints");
+const WithdrawalOrders = require('../models/WithdrawalOrders');
 
 // Admin Registration
 async function registerAdmin(req, res) {
-    try {
-        const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-        // Validate input
-        if (!email || !password) {
-            return res.status(400).json({ message: 'Please provide both email and password' });
-        }
-
-        // Check if the admin already exists
-        const existingAdmin = await Admin.findOne({ email });
-        if (existingAdmin) {
-            return res.status(400).json({ message: 'Email already registered' });
-        }
-
-        // Create new admin
-        const newAdmin = await Admin.create({ email, password });
-
-        res.status(201).json({ message: 'Admin registered successfully', admin: newAdmin });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+    // Validate input
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Please provide both email and password' });
     }
+
+    // Check if the admin already exists
+    const existingAdmin = await Admin.findOne({ email });
+    if (existingAdmin) {
+      return res.status(400).json({ message: 'Email already registered' });
+    }
+
+    // Create new admin
+    const newAdmin = await Admin.create({ email, password });
+
+    res.status(201).json({ message: 'Admin registered successfully', admin: newAdmin });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 }
 
 // Admin Login
 async function loginAdmin(req, res) {
-    try {
-        const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-        // Validate input
-        if (!email || !password) {
-            return res.status(400).json({ message: 'Please provide email and password' });
-        }
-
-        // Find the admin in the database
-        const admin = await Admin.findOne({ email });
-        if (!admin) {
-            return res.status(404).json({ message: 'Admin not found' });
-        }
-
-        // Compare password
-        const isPasswordMatch = await admin.comparePassword(password);
-        if (!isPasswordMatch) {
-            return res.status(401).json({ message: 'Incorrect email or password' });
-        }
-
-        // Generate and return token
-        const token = generateToken({ id: admin._id, email: admin.email, role: 'admin' });
-        res.json({ message: 'Login successful', token });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+    // Validate input
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Please provide email and password' });
     }
+
+    // Find the admin in the database
+    const admin = await Admin.findOne({ email });
+    if (!admin) {
+      return res.status(404).json({ message: 'Admin not found' });
+    }
+
+    // Compare password
+    const isPasswordMatch = await admin.comparePassword(password);
+    if (!isPasswordMatch) {
+      return res.status(401).json({ message: 'Incorrect email or password' });
+    }
+
+    // Generate and return token
+    const token = generateToken({ id: admin._id, email: admin.email, role: 'admin' });
+    res.json({ message: 'Login successful', token });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 }
 
 async function addWalletBalance(req, res) {
-    try {
-        const { email, password, amount } = req.body;
+  try {
+    const { email, password, amount } = req.body;
 
-        if (!email || !password || !amount) {
-            return res.status(400).json({ message: "All fields are required." });
-        }
-
-        const admin = await Admin.findOne({ email });
-
-        if (!admin) {
-            return res.status(404).json({ message: "Admin not found." });
-        }
-
-        const isMatch = await admin.comparePassword(password);
-        if (!isMatch) {
-            return res.status(401).json({ message: "Incorrect password." });
-        }
-
-        const now = new Date();
-        const date = now.toISOString().split('T')[0]; // YYYY-MM-DD
-        const time = now.toTimeString().split(' ')[0]; // HH:MM:SS
-
-        admin.walletBalance += parseFloat(amount);
-        admin.walletHistory.push({ amount: parseFloat(amount), date, time });
-
-        await admin.save();
-
-        res.status(200).json({
-            message: "Wallet balance updated successfully.",
-            walletBalance: admin.walletBalance,
-            walletHistory: admin.walletHistory
-        });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+    if (!email || !password || !amount) {
+      return res.status(400).json({ message: "All fields are required." });
     }
+
+    const admin = await Admin.findOne({ email });
+
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found." });
+    }
+
+    const isMatch = await admin.comparePassword(password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Incorrect password." });
+    }
+
+    const now = new Date();
+    const date = now.toISOString().split('T')[0]; // YYYY-MM-DD
+    const time = now.toTimeString().split(' ')[0]; // HH:MM:SS
+
+    admin.walletBalance += parseFloat(amount);
+    admin.walletHistory.push({ amount: parseFloat(amount), date, time });
+
+    await admin.save();
+
+    res.status(200).json({
+      message: "Wallet balance updated successfully.",
+      walletBalance: admin.walletBalance,
+      walletHistory: admin.walletHistory
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 }
 
 async function getAdminWalletHistory(req, res) {
@@ -116,29 +117,48 @@ async function getAdminWalletHistory(req, res) {
 
 //all users all weekly earnings.
 async function getAllWeeklyEarnings(req, res) {
-    try {
-      const wallets = await WalletPoints.find({}, { mySponsorId: 1, weeklyEarnings: 1, _id: 0 });
-  
-      if (!wallets || wallets.length === 0) {
-        return res.status(404).json({ message: "No weekly earnings data found." });
-      }
-  
-      res.status(200).json({
-        message: "All users' weekly earnings fetched successfully.",
-        data: wallets
-      });
-  
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  }
+  try {
+    const wallets = await WalletPoints.find({}, { mySponsorId: 1, weeklyEarnings: 1, _id: 0 });
 
+    if (!wallets || wallets.length === 0) {
+      return res.status(404).json({ message: "No weekly earnings data found." });
+    }
+
+    res.status(200).json({
+      message: "All users' weekly earnings fetched successfully.",
+      data: wallets
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
+async function getAllWithdrawalOrders(req, res) {
+  try {
+    const orders = await WithdrawalOrders.find().sort({ createdAt: -1 }); // newest first (optional)
+
+    if (!orders || orders.length === 0) {
+      return res.status(404).json({ message: "No withdrawal orders found." });
+    }
+
+    res.status(200).json({
+      message: "Withdrawal orders fetched successfully.",
+      totalOrders: orders.length,
+      withdrawalOrders: orders
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
 
 
 module.exports = {
-    registerAdmin,
-    loginAdmin,
-    addWalletBalance,
-    getAdminWalletHistory,
-    getAllWeeklyEarnings
+  registerAdmin,
+  loginAdmin,
+  addWalletBalance,
+  getAdminWalletHistory,
+  getAllWeeklyEarnings,
+  getAllWithdrawalOrders
 };

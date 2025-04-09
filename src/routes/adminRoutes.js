@@ -1,5 +1,5 @@
 const express = require('express');
-const { registerAdmin, loginAdmin, addWalletBalance, getAdminWalletHistory, getAllWeeklyEarnings } = require('../controllers/adminController');
+const { registerAdmin, loginAdmin, addWalletBalance, getAdminWalletHistory, getAllWeeklyEarnings, getAllWithdrawalOrders } = require('../controllers/adminController');
 const { handleVerifyWalletDetails, handleRejectKYCDetails, handleGetAllNonVerifiedKycUsers } = require("../controllers/walletController");
 
 const router = express.Router();
@@ -13,5 +13,6 @@ router.get("/allnonverifiedwallet", handleGetAllNonVerifiedKycUsers);
 router.post("/add-wallet-balance", addWalletBalance);
 router.get('/admin-wallet-history', getAdminWalletHistory);
 router.get('/all-user-payouts', getAllWeeklyEarnings);
+router.get('/get-all-withdrawals', getAllWithdrawalOrders);
 
 module.exports = router;

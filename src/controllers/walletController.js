@@ -273,7 +273,6 @@ async function getApprovedWalletUsers(req, res) {
   }
 }
 
-
 module.exports = {
   addPersonalPoints,
   checkIfInLeftTree,
