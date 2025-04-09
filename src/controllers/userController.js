@@ -101,9 +101,31 @@ async function createWithdrawalOrder(req, res) {
     }
 }
 
+// all wallet orders for a particular sponsor id
+async function getAllWithdrawalOrdersbyId(req, res) {
+    try {
+        const { sponsorId } = req.body;
+        const orders = await WithdrawalOrders.find({ mySponsorId: sponsorId }).sort({ createdAt: -1 }); // newest first (optional)
+
+        if (!orders || orders.length === 0) {
+            return res.status(404).json({ message: "No withdrawal orders found." });
+        }
+
+        res.status(200).json({
+            message: "Withdrawal orders fetched successfully.",
+            totalOrders: orders.length,
+            withdrawalOrders: orders
+        });
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
 
 module.exports = {
     handleGetAllReferrals,
     getOrdersBySponsorId,
-    createWithdrawalOrder
+    createWithdrawalOrder,
+    getAllWithdrawalOrdersbyId
 }

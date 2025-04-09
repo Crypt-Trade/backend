@@ -2,6 +2,7 @@ const Topup = require('../models/Topup');
 const UserOrders = require('../models/UserOrders');
 const User = require('../models/User');
 const Admin = require('../models/Admin');
+const WalletPoints = require("../models/WalletPoints");
 
 async function getTopupDashboardInfo(req, res) {
     try {
@@ -116,7 +117,42 @@ async function getAdminDashboardInfo(req, res) {
     }
 }
 
+//User Dashboard
+async function getUserDashboardInfo(req, res) {
+    try {
+        const { sponsorId } = req.body;
+
+        if (!sponsorId) {
+            return res.status(400).json({ message: "sponsorId is required." });
+        }
+
+        // Fetch user data by sponsorId
+        const user = await User.findOne({ sponsorId });
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found." });
+        }
+
+        // Fetch wallet data using mySponsorId from user
+        const wallet = await WalletPoints.findOne({ mySponsorId: user.mySponsorId });
+
+        if (!wallet) {
+            return res.status(404).json({ message: "Wallet points not found for this user." });
+        }
+
+        res.status(200).json({
+            message: "User and wallet data fetched successfully.",
+            userDetails: user,
+            walletDetails: wallet
+        });
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
 module.exports = {
     getTopupDashboardInfo,
-    getAdminDashboardInfo
+    getAdminDashboardInfo,
+    getUserDashboardInfo
 };
