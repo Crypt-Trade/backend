@@ -127,31 +127,31 @@ async function getUserDashboardInfo(req, res) {
         }
 
         // Fetch user data by sponsorId
-        const user = await User.findOne({ sponsorId });
+        const user = await User.findOne({ mySponsorId: sponsorId });
 
         if (!user) {
             return res.status(404).json({ message: "User not found." });
         }
 
         // Fetch wallet data using mySponsorId from user
-        const wallet = await WalletPoints.findOne({ mySponsorId: user.mySponsorId });
+        const wallet = await WalletPoints.findOne({ mySponsorId: sponsorId });
 
         if (!wallet) {
             return res.status(404).json({ message: "Wallet points not found for this user." });
         }
 
         // Extract direct points
-        const leftDirectPoints = wallet.directPoints.leftPoints;
-        const rightDirectPoints = wallet.directPoints.rightPoints;
+        const leftDirectPoints = wallet.directPoints.leftPoints || 0;
+        const rightDirectPoints = wallet.directPoints.rightPoints || 0;
 
         const totalDirectBonus = leftDirectPoints + rightDirectPoints;
         const instantDirectSalesBonus = Number((totalDirectBonus * 0.1).toFixed(2));
 
-        //Extract team points
-        const leftTeamPoints = wallet.currentWeekPoints.leftPoints;
-        const rightTeamPoints = wallet.currentWeekPoints.rightPoints;
+        // Extract team points
+        const leftTeamPoints = wallet.currentWeekPoints.leftPoints || 0;
+        const rightTeamPoints = wallet.currentWeekPoints.rightPoints || 0;
 
-        directMatchedPoints = Math.min(leftTeamPoints, rightTeamPoints);
+        const directMatchedPoints = Math.min(leftTeamPoints, rightTeamPoints);
         const instantTeamSalesBonus = Number((directMatchedPoints * 0.1).toFixed(2));
 
         res.status(200).json({
