@@ -115,6 +115,68 @@ async function updateOrderStatus(req, res) {
     }
 }
 
+//update user without order id
+async function createApprovedOrderAndActivateUser(req, res) {
+    try {
+        const { mySponsorId, package_name, order_price } = req.body;
+
+        if (!mySponsorId || !package_name || !order_price) {
+            return res.status(400).json({ message: "Missing required fields" });
+        }
+
+        const user = await User.findOne({ mySponsorId });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const amount = parseFloat(order_price);
+
+        const topupUser = await Topup.findOne();
+        if (!topupUser || topupUser.walletBalance < amount) {
+            return res.status(400).json({ message: "Insufficient wallet balance in topup account." });
+        }
+
+        // Update user status
+        user.isActive = true;
+        user.activeDate = new Date();
+        user.subcription = package_name;
+        await user.save();
+
+        // Create new approved order
+        const newOrder = new UserOrders({
+            user_details: {
+                user_object_id: user._id,
+                user_mySponsor_id: user.mySponsorId,
+                user_name: user.name
+            },
+            order_details: {
+                order_price: amount
+            },
+            package_name,
+            status: "approved",
+            image_url: null
+        });
+
+        await newOrder.save();
+
+        // Deduct from topup balance
+        topupUser.walletBalance -= amount;
+        await topupUser.save();
+
+        // Assign points
+        await addPersonalPoints(user, order_price);
+        await addPointsToAncestors(user, order_price);
+
+        res.status(200).json({
+            message: "User activated, order created, and points assigned successfully.",
+            order: newOrder
+        });
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
 
 async function getAllOrders(req, res) {
     try {
@@ -140,4 +202,4 @@ async function getAprrovedOrders(req, res) {
 }
 
 
-module.exports = { createOrder, updateOrderStatus, getAllOrders, getAprrovedOrders };
+module.exports = { createOrder, updateOrderStatus, getAllOrders, getAprrovedOrders, createApprovedOrderAndActivateUser };
