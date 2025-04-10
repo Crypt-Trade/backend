@@ -140,10 +140,26 @@ async function getUserDashboardInfo(req, res) {
             return res.status(404).json({ message: "Wallet points not found for this user." });
         }
 
+        // Extract direct points
+        const leftDirectPoints = wallet.directPoints.leftPoints;
+        const rightDirectPoints = wallet.directPoints.rightPoints;
+
+        const totalDirectBonus = leftDirectPoints + rightDirectPoints;
+        const instantDirectSalesBonus = Number((totalDirectBonus * 0.1).toFixed(2));
+
+        //Extract team points
+        const leftTeamPoints = wallet.currentWeekPoints.leftPoints;
+        const rightTeamPoints = wallet.currentWeekPoints.rightPoints;
+
+        directMatchedPoints = Math.min(leftTeamPoints, rightTeamPoints);
+        const instantTeamSalesBonus = Number((directMatchedPoints * 0.1).toFixed(2));
+
         res.status(200).json({
             message: "User and wallet data fetched successfully.",
             userDetails: user,
-            walletDetails: wallet
+            walletDetails: wallet,
+            currentDirectPoints: instantDirectSalesBonus,
+            currentTeamPoints: instantTeamSalesBonus
         });
 
     } catch (error) {
