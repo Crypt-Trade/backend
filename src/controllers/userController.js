@@ -2,6 +2,7 @@ const User = require('../models/User');
 const UserOrders = require("../models/UserOrders");
 const WithdrawalOrders = require('../models/WithdrawalOrders');
 const WalletPoints = require('../models/WalletPoints');
+const WalletDetails = require('../models/WalletDetails');
 
 
 async function handleGetAllReferrals(req, res) {
@@ -105,7 +106,7 @@ async function createWithdrawalOrder(req, res) {
 async function getAllWithdrawalOrdersbyId(req, res) {
     try {
         const { sponsorId } = req.body;
-        const orders = await WithdrawalOrders.find({ mySponsorId: sponsorId }).sort({ createdAt: -1 }); // newest first (optional)
+        const orders = await WithdrawalOrders.find({ "user_details.user_mySponsor_id": sponsorId }).sort({ createdAt: -1 });
 
         if (!orders || orders.length === 0) {
             return res.status(404).json({ message: "No withdrawal orders found." });
@@ -122,10 +123,36 @@ async function getAllWithdrawalOrdersbyId(req, res) {
     }
 }
 
+//E- wallet details
+async function getWalletAddressBySponsorId(req, res) {
+    try {
+        const { userId } = req.body;
+
+        if (!userId) {
+            return res.status(400).json({ message: "User ID is required." });
+        }
+
+        const walletDetail = await WalletDetails.findOne({ userId: userId });
+
+        if (!walletDetail) {
+            return res.status(404).json({ message: "Wallet details not found for this sponsorId." });
+        }
+
+        res.status(200).json({
+            message: "Wallet address fetched successfully.",
+            walletAddress: walletDetail.Walletaddress
+        });
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
 
 module.exports = {
     handleGetAllReferrals,
     getOrdersBySponsorId,
     createWithdrawalOrder,
-    getAllWithdrawalOrdersbyId
+    getAllWithdrawalOrdersbyId,
+    getWalletAddressBySponsorId
 }

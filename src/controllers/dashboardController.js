@@ -45,6 +45,7 @@ async function getTopupDashboardInfo(req, res) {
         }, 0);
 
         const totalUsers = await User.countDocuments();
+        const totalActiveUsers = await User.countDocuments({ isActive: true });
 
         res.status(200).json({
             message: "Dashboard info fetched successfully.",
@@ -52,7 +53,8 @@ async function getTopupDashboardInfo(req, res) {
             total_Balance: totalWalletHistoryAmount,
             monthlyBusiness,
             allBusiness,
-            totalUsers
+            totalUsers,
+            totalActiveUsers
         });
 
     } catch (error) {
@@ -102,6 +104,7 @@ async function getAdminDashboardInfo(req, res) {
         }, 0);
 
         const totalUsers = await User.countDocuments();
+        const totalActiveUsers = await User.countDocuments({ isActive: true });
 
         res.status(200).json({
             message: "Dashboard info fetched successfully.",
@@ -109,7 +112,8 @@ async function getAdminDashboardInfo(req, res) {
             total_Balance: totalWalletHistoryAmount,
             monthlyBusiness,
             allBusiness,
-            totalUsers
+            totalUsers,
+            totalActiveUsers
         });
 
     } catch (error) {

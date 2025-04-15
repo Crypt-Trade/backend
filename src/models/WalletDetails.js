@@ -1,26 +1,26 @@
 const mongoose = require('mongoose');
 const WalletSchema = new mongoose.Schema({
-    userId: {
+  userId: {
     type: String,
     required: true,
   },
   name: {
-    type: String, 
+    type: String,
     required: true,
   },
   telegramId: {
-    type: String, 
+    type: String,
     required: true,
   },
-  Walletaddress:{
+  Walletaddress: {
     type: String,
     required: true,
   },
   walletApproved: {
-        type: String,
-        enum: ['pending', 'verified', 'rejected'],
-        default: 'pending'
-    }
+    type: String,
+    enum: ['pending', 'verified', 'rejected'],
+    default: 'pending'
+  }
 
 })
 const WalletDetails = mongoose.model('WalletDetails', WalletSchema);
