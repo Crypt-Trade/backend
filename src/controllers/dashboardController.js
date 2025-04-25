@@ -104,6 +104,7 @@ async function getAdminDashboardInfo(req, res) {
         }, 0);
 
         const totalUsers = await User.countDocuments();
+        const allUsers = await User.find({});
         const totalActiveUsers = await User.countDocuments({ isActive: true });
 
         res.status(200).json({
@@ -113,6 +114,7 @@ async function getAdminDashboardInfo(req, res) {
             monthlyBusiness,
             allBusiness,
             totalUsers,
+            allUsers,
             totalActiveUsers
         });
 
