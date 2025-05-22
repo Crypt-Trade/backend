@@ -516,16 +516,16 @@ async function handleExtremeLeft(req, res) {
     try {
         const { sponsorId } = req.body;
         console.log(sponsorId);
-        
-        if(!sponsorId) { return res.status(404).json({ message: "Please provide sponsor ID." }); }
+
+        if (!sponsorId) { return res.status(404).json({ message: "Please provide sponsor ID." }); }
 
         // Find the sponsor
-        const user = await User.findOne({mySponsorId: sponsorId});
+        const user = await User.findOne({ mySponsorId: sponsorId });
         if (!user) { return res.status(404).json({ message: 'Invalid SponsorId.' }); }
 
         // Find the extreme left user
         const extremeLeftUser = await findExtremeLeft(user);
-        
+
         // Build the tree
         const tree = await buildTree(extremeLeftUser);
         return res.status(200).json(tree);
@@ -537,9 +537,9 @@ async function handleExtremeLeft(req, res) {
 
 // helper function to find extreme left user
 async function findExtremeLeft(user) {
-    
+
     // Base case: If no left child or no binary position, return the current user
-    if (!user.binaryPosition || !user.binaryPosition.left) return user; 
+    if (!user.binaryPosition || !user.binaryPosition.left) return user;
 
     // Recursively call the function for the left child
     const leftChild = await User.findById(user.binaryPosition.left);
@@ -550,15 +550,15 @@ async function findExtremeLeft(user) {
 async function handleExtremeRight(req, res) {
     try {
         const { sponsorId } = req.body;
-        if(!sponsorId) { return res.status(404).json({ message: "Please provide sponsor ID." }); }
+        if (!sponsorId) { return res.status(404).json({ message: "Please provide sponsor ID." }); }
 
         // Find the sponsor
-        const user = await User.findOne({mySponsorId: sponsorId});
+        const user = await User.findOne({ mySponsorId: sponsorId });
         if (!user) { return res.status(404).json({ message: 'User not found' }); }
 
         // Find the extreme right user
         const extremeRightUser = await findExtremeRight(user);
-        
+
         // Build the tree
         const tree = await buildTree(extremeRightUser);
         return res.status(200).json(tree);
@@ -570,13 +570,93 @@ async function handleExtremeRight(req, res) {
 
 // helper function to find extreme right user
 async function findExtremeRight(user) {
-    
+
     // Base case: If no left child or no binary position, return the current user
-    if (!user.binaryPosition || !user.binaryPosition.right) return user; 
+    if (!user.binaryPosition || !user.binaryPosition.right) return user;
 
     // Recursively call the function for the left child
     const rightChild = await User.findById(user.binaryPosition.right);
     return await findExtremeRight(rightChild);
+}
+
+async function handleEditUserDetails(req, res) {
+    try {
+        const {
+
+            name,
+            mobileNumber,
+            email,
+            password,
+            subcription,
+            isActive,
+        } = req.body;
+        const sponsorId = req.headers.sponsorid;
+
+        // Find user by sponsorId
+        const user = await User.findOne({ mySponsorId: sponsorId });
+        if (!user) {
+            return res.status(404).json({ message: 'User account not found' });
+        }
+
+        // Validate updates
+        const updates = {
+            name,
+            mobileNumber,
+            email,
+
+        };
+
+        // Validate unique fields
+        const uniqueFields = ['mobileNumber', 'email'];
+        for (const field of uniqueFields) {
+            if (updates[field]) {
+                const existing = await User.findOne({ [field]: updates[field] });
+                if (existing && existing._id.toString() !== user._id.toString()) {
+                    return res.status(409).json({ message: `${field} already exists` });
+                }
+            }
+        }
+
+        // Update user fields
+        for (const [key, value] of Object.entries(updates)) {
+            if (value !== undefined) {
+                user[key] = value;
+            }
+        }
+
+        // Update isActive
+        if (typeof isActive === 'boolean') {
+            user.isActive = isActive;
+            console.log('isActive updated:', isActive);
+        }
+
+        //Update Subcription
+        if (subcription) {
+            user.subcription = subcription;
+            console.log('subcription is updated successfully');
+        }
+
+        // Update password if provided
+        if (password) {
+            user.password = password;
+            console.log('Password updated', password);
+        }
+
+        await user.save();
+
+        const uniqueKey = user.uniqueKey;
+
+        const emailResponse = await sendEmailNotification(email, name, sponsorId, password, uniqueKey);
+
+        if (emailResponse === 'error') {
+            console.error('Failed to send registration email.');
+        }
+
+        return res.status(200).json({ message: 'User details updated successfully', user });
+    } catch (error) {
+        console.error('Error updating user:', error.message);
+        return res.status(500).json({ message: 'Error updating user', error: error.message });
+    }
 }
 
 module.exports = {
@@ -588,6 +668,7 @@ module.exports = {
     handleGetSponsorChildrens,
     handleVerifySponsor,
     handleExtremeLeft,
-    handleExtremeRight
+    handleExtremeRight,
+    handleEditUserDetails
 
 };

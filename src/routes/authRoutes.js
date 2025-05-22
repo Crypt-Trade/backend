@@ -1,5 +1,5 @@
 const express = require('express');
-const { handleRegisterFirstUser, handleRegisterUser, handleRegisterUsingLeftLink, handleRegisterUsingRightLink, handleLoginUser, handleGetSponsorChildrens  , handleVerifySponsor , handleExtremeRight , handleExtremeLeft} = require('../controllers/authController');
+const { handleRegisterFirstUser, handleRegisterUser, handleRegisterUsingLeftLink, handleRegisterUsingRightLink, handleLoginUser, handleGetSponsorChildrens  , handleVerifySponsor , handleExtremeRight , handleExtremeLeft, handleEditUserDetails } = require('../controllers/authController');
 
 const router = express.Router();
 
@@ -13,5 +13,6 @@ router.get('/getSponsorChildrens/:id', handleGetSponsorChildrens);
 router.post('/verify-sponsor' , handleVerifySponsor);
 router.post('/extremeLeft', handleExtremeLeft);
 router.post('/extremeRight', handleExtremeRight);
+router.put('/editUserDetails', handleEditUserDetails);
 
 module.exports = router;
