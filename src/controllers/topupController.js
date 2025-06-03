@@ -1,6 +1,7 @@
 const Topup = require('../models/Topup');
 const Admin = require('../models/Admin');
 const bcrypt = require("bcrypt");
+const generateToken = require('../utils/generateToken');
 
 // Register Topup User
 
@@ -42,7 +43,8 @@ async function loginTopup(req, res) {
       return res.status(401).json({ message: "Incorrect password." });
     }
 
-    res.status(200).json({ message: "Login successful.", topupUser });
+    const token = generateToken({ id: topupUser._id, email: topupUser.email, role: 'topup' });
+    res.status(200).json({ message: "Login successful.", topupUser, token });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

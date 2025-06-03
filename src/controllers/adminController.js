@@ -4,6 +4,7 @@ const generateToken = require('../utils/generateToken');
 const WalletPoints = require("../models/WalletPoints");
 const WithdrawalOrders = require('../models/WithdrawalOrders');
 const User = require('../models/User');
+const MonthlyReward = require('../models/MonthlyReward');
 
 // Admin Registration
 async function registerAdmin(req, res) {
@@ -198,6 +199,48 @@ async function updateWithdrawalOrderStatus(req, res) {
   }
 }
 
+//get all monthly rewards
+async function getAllMonthlyRewards(req, res) {
+  try {
+    const rewards = await MonthlyReward.find().sort({ order_date: -1 }); // Most recent first
+    res.status(200).json({ rewards });
+  } catch (error) {
+    console.error("Error fetching monthly rewards:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+//update status to paid of scholorship
+async function updateRewardStatus(req, res) {
+  try {
+    const { user_mySponsor_id, date } = req.body;
+
+    if (!user_mySponsor_id || !date) {
+      return res.status(400).json({ message: 'user_name and date are required' });
+    }
+
+    const rewardDoc = await MonthlyReward.findOne({ user_mySponsor_id });
+
+    if (!rewardDoc) {
+      return res.status(404).json({ message: 'Monthly reward not found for this user' });
+    }
+
+    const rewardEntry = rewardDoc.rewards.find(entry => entry.date === date);
+
+    if (!rewardEntry) {
+      return res.status(404).json({ message: 'No reward found for the specified date' });
+    }
+
+    rewardEntry.status = 'paid';
+    await rewardDoc.save();
+
+    res.status(200).json({ message: 'Reward status updated to paid', reward: rewardEntry });
+  } catch (error) {
+    console.error('Error updating reward status:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
 
 module.exports = {
   registerAdmin,
@@ -206,5 +249,7 @@ module.exports = {
   getAdminWalletHistory,
   getAllWeeklyEarnings,
   getAllWithdrawalOrders,
-  updateWithdrawalOrderStatus
+  updateWithdrawalOrderStatus,
+  getAllMonthlyRewards,
+  updateRewardStatus
 };
