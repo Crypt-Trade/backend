@@ -83,9 +83,11 @@ async function updateOrderStatus(req, res) {
         order.status = "approved";
         await order.save();
 
-        user.isActive = true;
-        user.activeDate = new Date();
-        user.subcription = order.package_name;
+        if (parseFloat(order_price) !== 25) {
+            user.isActive = true;
+            user.activeDate = new Date();
+            user.subcription = order.package_name;
+        }
 
         // Assign points
         await addPersonalPoints(user, order_price);
@@ -149,11 +151,13 @@ async function createApprovedOrderAndActivateUser(req, res) {
             return res.status(400).json({ message: "Insufficient wallet balance in topup account." });
         }
 
-        // Update user status
-        user.isActive = true;
-        user.activeDate = new Date();
-        user.subcription = package_name;
-        await user.save();
+        if (parseFloat(order_price) !== 25) {
+            // Update user status
+            user.isActive = true;
+            user.activeDate = new Date();
+            user.subcription = package_name;
+            await user.save();
+        }
 
         // Create new approved order
         const newOrder = new UserOrders({

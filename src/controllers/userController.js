@@ -3,6 +3,7 @@ const UserOrders = require("../models/UserOrders");
 const WithdrawalOrders = require('../models/WithdrawalOrders');
 const WalletPoints = require('../models/WalletPoints');
 const WalletDetails = require('../models/WalletDetails');
+const MonthlyReward = require('../models/MonthlyReward');
 
 
 async function handleGetAllReferrals(req, res) {
@@ -148,11 +149,30 @@ async function getWalletAddressBySponsorId(req, res) {
     }
 }
 
+//get all monthly rewards with respect to the sponsorid.
+async function getMonthlyRewardsBySponsorId(req, res) {
+    try {
+        const { sponsorId } = req.params;
+
+        if (!sponsorId) {
+            return res.status(400).json({ message: 'Sponsor ID is required' });
+        }
+
+        const rewards = await MonthlyReward.find({ user_mySponsor_id: sponsorId }).sort({ order_date: -1 });
+
+        res.status(200).json({ rewards });
+    } catch (error) {
+        console.error("Error fetching rewards by sponsor ID:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+}
+
 
 module.exports = {
     handleGetAllReferrals,
     getOrdersBySponsorId,
     createWithdrawalOrder,
     getAllWithdrawalOrdersbyId,
-    getWalletAddressBySponsorId
+    getWalletAddressBySponsorId,
+    getMonthlyRewardsBySponsorId
 }
