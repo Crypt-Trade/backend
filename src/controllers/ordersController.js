@@ -278,7 +278,5 @@ async function addMonthlyRewards(req, res) {
     }
 }
 
-//bas aisehi
-
 
 module.exports = { createOrder, updateOrderStatus, getAllOrders, getAprrovedOrders, createApprovedOrderAndActivateUser, addMonthlyRewards };
