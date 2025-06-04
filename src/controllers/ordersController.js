@@ -87,6 +87,7 @@ async function updateOrderStatus(req, res) {
             user.isActive = true;
             user.activeDate = new Date();
             user.subcription = order.package_name;
+            await user.save();
         }
 
         // Assign points
