@@ -171,20 +171,20 @@ async function getMonthlyRewardsBySponsorId(req, res) {
 // Ranking System
 const rankList = [
     { points: 100, name: "Starter Rank" },
-    { points: 500, name: "Master Rank" },
-    { points: 1000, name: "Bronze Rank" },
-    { points: 2500, name: "Silver Rank" },
-    { points: 5000, name: "Gold Rank" },
-    { points: 7500, name: "Crystal Rank" },
-    { points: 10000, name: "Sapphire Rank" },
-    { points: 15000, name: "Ruby Rank" },
-    { points: 20000, name: "Platinum Rank" },
-    { points: 25000, name: "Diamond Rank" },
-    { points: 50000, name: "Black Diamond Rank" },
-    { points: 100000, name: "Millionaire Club Rank" },
-    { points: 200000, name: "Tycoon Rank" },
-    { points: 300000, name: "Unicorn Rank" },
-    { points: 500000, name: "Cryptrade King" }
+    { points: 600, name: "Master Rank" },
+    { points: 1600, name: "Bronze Rank" },
+    { points: 4100, name: "Silver Rank" },
+    { points: 9100, name: "Gold Rank" },
+    { points: 16600, name: "Crystal Rank" },
+    { points: 26600, name: "Sapphire Rank" },
+    { points: 41600, name: "Ruby Rank" },
+    { points: 61600, name: "Platinum Rank" },
+    { points: 86600, name: "Diamond Rank" },
+    { points: 136600, name: "Black Diamond Rank" },
+    { points: 236600, name: "Millionaire Club Rank" },
+    { points: 436600, name: "Tycoon Rank" },
+    { points: 736600, name: "Unicorn Rank" },
+    { points: 1236600, name: "Cryptrade King" }
 ];
 
 async function addOrUpdateRanking(req, res) {
