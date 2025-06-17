@@ -3,6 +3,7 @@ const UserOrders = require("../models/UserOrders");
 const WithdrawalOrders = require('../models/WithdrawalOrders');
 const WalletPoints = require('../models/WalletPoints');
 const WalletDetails = require('../models/WalletDetails');
+const Ranking = require('../models/Ranking');
 const MonthlyReward = require('../models/MonthlyReward');
 
 
@@ -167,6 +168,125 @@ async function getMonthlyRewardsBySponsorId(req, res) {
     }
 }
 
+// Ranking System
+const rankList = [
+    { points: 500, name: "Silver" },
+    { points: 1000, name: "Gold" },
+    { points: 2000, name: "Platinum" },
+    { points: 5000, name: "Diamond" }
+];
+
+async function addOrUpdateRanking(req, res) {
+    try {
+        const { mysponsorid } = req.body;
+
+        const user = await User.findOne({ mySponsorId: mysponsorid });
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        const wallet = await WalletPoints.findOne({ mySponsorId: mysponsorid });
+        if (!wallet) return res.status(404).json({ message: 'Wallet not found' });
+
+        const matchingPoints = Math.min(wallet.totalPoints.leftPoints, wallet.totalPoints.rightPoints);
+
+        // Determine all eligible ranks
+        const earnedRanks = rankList.filter(rank => matchingPoints >= rank.points);
+
+        if (earnedRanks.length === 0) {
+            return res.status(200).json({ message: 'No rank achieved yet' });
+        }
+
+        let userRank = await Ranking.findOne({ mysponsorid });
+
+        if (!userRank) {
+            // If no rank record exists, create one with all eligible ranks
+            const rankingDetails = earnedRanks.map(rank => ({
+                matching_points: rank.points,
+                rank_name: rank.name,
+                status: 'unclaimed'
+            }));
+
+            userRank = await Ranking.create({
+                mysponsorid,
+                userid: user._id,
+                ranking_details: rankingDetails
+            });
+        } else {
+            // If rank record exists, add only the missing eligible ranks
+            const existingRankNames = userRank.ranking_details.map(r => r.rank_name);
+
+            const newRanks = earnedRanks
+                .filter(rank => !existingRankNames.includes(rank.name))
+                .map(rank => ({
+                    matching_points: rank.points,
+                    rank_name: rank.name,
+                    status: 'unclaimed'
+                }));
+
+            if (newRanks.length > 0) {
+                userRank.ranking_details.push(...newRanks);
+                await userRank.save();
+            }
+        }
+
+        res.status(200).json({ message: 'Ranks evaluated and updated', userRank });
+
+    } catch (error) {
+        console.error('Error in ranking API:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
+// Get All Rankings
+async function getAllRankings(req, res) {
+    try {
+        // Populate user info if needed
+        const rankings = await Ranking.find()
+            .populate('userid', 'name email mySponsorId')  // Adjust fields as needed
+            .sort({ "ranking_details.0.matching_points": -1 });  // Sort by top rank points if needed
+
+        res.status(200).json({ rankings });
+    } catch (error) {
+        console.error('Error fetching all rankings:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
+// Update Rank Status
+async function updateRankStatus(req, res) {
+    try {
+        const { mysponsorid, rank_name, status } = req.body;
+
+        if (!mysponsorid || !rank_name || !status) {
+            return res.status(400).json({ message: 'Missing required fields' });
+        }
+
+        // Find ranking document by sponsor ID
+        const rankingDoc = await Ranking.findOne({ mysponsorid });
+
+        if (!rankingDoc) {
+            return res.status(404).json({ message: 'Ranking not found for this sponsor ID' });
+        }
+
+        // Find the rank entry inside the ranking_details array
+        const rankEntry = rankingDoc.ranking_details.find(r => r.rank_name === rank_name);
+
+        if (!rankEntry) {
+            return res.status(404).json({ message: 'Rank not found for this user' });
+        }
+
+        // Update the status
+        rankEntry.status = status;
+
+        await rankingDoc.save();
+
+        res.status(200).json({ message: `Rank status updated successfully`, ranking: rankingDoc });
+
+    } catch (error) {
+        console.error('Error updating rank status:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
 
 module.exports = {
     handleGetAllReferrals,
@@ -174,5 +294,8 @@ module.exports = {
     createWithdrawalOrder,
     getAllWithdrawalOrdersbyId,
     getWalletAddressBySponsorId,
-    getMonthlyRewardsBySponsorId
+    getMonthlyRewardsBySponsorId,
+    addOrUpdateRanking,
+    getAllRankings,
+    updateRankStatus
 }
