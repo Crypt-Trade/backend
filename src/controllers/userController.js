@@ -217,6 +217,7 @@ async function addOrUpdateRanking(req, res) {
             }));
 
             userRank = await Ranking.create({
+                name: user.name,
                 mysponsorid,
                 userid: user._id,
                 ranking_details: rankingDetails
