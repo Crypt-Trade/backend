@@ -1,18 +1,35 @@
 const UserOrders = require("../models/UserOrders");
 const User = require("../models/User");
-const Topup = require('../models/Topup');
-const MonthlyReward = require('../models/MonthlyReward');
-const { addPersonalPoints, addPointsToAncestors } = require("../controllers/walletController");
-const { s3Client, PutObjectCommand } = require('../utils/s3Bucket');
+const Topup = require("../models/Topup");
+const MonthlyReward = require("../models/MonthlyReward");
+const {
+    addPersonalPoints,
+    addPointsToAncestors,
+} = require("../controllers/walletController");
+const { s3Client, PutObjectCommand } = require("../utils/s3Bucket");
 
 async function createOrder(req, res) {
     try {
-        const { user_object_id, user_mySponsor_id, user_name, order_price, package_name } = req.body;
-        if (!user_object_id || !user_mySponsor_id || !user_name || !order_price || !package_name) {
-            return res.status(400).json({ message: "Please provide all required fields" });
+        const {
+            user_object_id,
+            user_mySponsor_id,
+            user_name,
+            order_price,
+            package_name,
+        } = req.body;
+        if (
+            !user_object_id ||
+            !user_mySponsor_id ||
+            !user_name ||
+            !order_price ||
+            !package_name
+        ) {
+            return res
+                .status(400)
+                .json({ message: "Please provide all required fields" });
         }
         if (!req.file) {
-            return res.status(400).json({ message: 'Image is required.' });
+            return res.status(400).json({ message: "Image is required." });
         }
         const uploadToS3 = async (file, keyPrefix) => {
             const params = {
@@ -24,20 +41,20 @@ async function createOrder(req, res) {
             await s3Client.send(new PutObjectCommand(params));
             return `https://${params.Bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${params.Key}`;
         };
-        const imageUrl = await uploadToS3(req.file, 'user-documents');
+        const imageUrl = await uploadToS3(req.file, "user-documents");
         const newOrder = await UserOrders.create({
             user_details: { user_object_id, user_mySponsor_id, user_name },
             order_details: { order_price },
             package_name,
-            image_url: imageUrl
+            image_url: imageUrl,
         });
-        res.status(201).json({ message: "Order created successfully", order: newOrder });
+        res
+            .status(201)
+            .json({ message: "Order created successfully", order: newOrder });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 }
-
-
 
 async function updateOrderStatus(req, res) {
     try {
@@ -50,7 +67,7 @@ async function updateOrderStatus(req, res) {
         // Find the order by sponsor ID and order number
         const order = await UserOrders.findOne({
             "user_details.user_mySponsor_id": mySponsorId,
-            "order_details.order_no": order_no
+            "order_details.order_no": order_no,
         });
 
         if (!order) {
@@ -66,7 +83,9 @@ async function updateOrderStatus(req, res) {
         }
 
         if (topupUser.walletBalance < amount) {
-            return res.status(400).json({ message: "Insufficient wallet balance in topup account." });
+            return res
+                .status(400)
+                .json({ message: "Insufficient wallet balance in topup account." });
         }
 
         // // Update the status field
@@ -83,17 +102,25 @@ async function updateOrderStatus(req, res) {
         order.status = "approved";
         await order.save();
 
-        if (parseFloat(order_price) !== 25) {
+        if (parseFloat(order_price) !== 20) {
             user.isActive = true;
             user.activeDate = new Date();
             user.subcription = order.package_name;
             await user.save();
+        } else {
+            // Fetch the most recent MonthlyReward for the user
+            const latestRewardDoc = await MonthlyReward.findOne({ user_mySponsor_id: mySponsorId })
+                .sort({ order_date: -1 });
+
+            if (latestRewardDoc) {
+                latestRewardDoc.order_date = new Date(); // Update with current date
+                await latestRewardDoc.save();
+            }
         }
 
         // Assign points
         await addPersonalPoints(user, order_price);
         await addPointsToAncestors(user, order_price);
-
 
         // 5. Deduct from Topup user's wallet balance
         // const topupUser = await Topup.findOne(); // use correct identifier
@@ -111,21 +138,37 @@ async function updateOrderStatus(req, res) {
 
         await topupUser.save();
 
-        // Create MonthlyReward if conditions match
-        if (order.package_name === "Premium" && parseFloat(order_price) === 1000) {
+        // Define valid packages and their prices
+        const validPackages = [
+            { name: "kick starter", price: 50 },
+            { name: "bull starter", price: 100 },
+            { name: "whale starter", price: 500 },
+            { name: "Premium", price: 1000 },
+            { name: "bull master", price: 2000 },
+            { name: "whale master", price: 5000 },
+        ];
 
+        // Check if the current package and price are valid
+        const isValidPackage = validPackages.some(
+            (pkg) =>
+                pkg.name.toLowerCase() === order.package_name.toLowerCase() &&
+                pkg.price === parseFloat(order_price)
+        );
+
+        if (isValidPackage) {
             await MonthlyReward.create({
                 user_name: user.name,
                 user_mySponsor_id: mySponsorId,
                 order_price: parseFloat(order_price),
                 package_name: order.package_name,
-                rewards: []  // Initially empty; will be populated monthly
+                rewards: [], // reward_points will be handled later
             });
         }
 
-
-        res.json({ message: "Order status updated and points assigned successfully", order });
-
+        res.json({
+            message: "Order status updated and points assigned successfully",
+            order,
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -149,15 +192,25 @@ async function createApprovedOrderAndActivateUser(req, res) {
 
         const topupUser = await Topup.findOne();
         if (!topupUser || topupUser.walletBalance < amount) {
-            return res.status(400).json({ message: "Insufficient wallet balance in topup account." });
+            return res
+                .status(400)
+                .json({ message: "Insufficient wallet balance in topup account." });
         }
 
-        if (parseFloat(order_price) !== 25) {
-            // Update user status
+        if (parseFloat(order_price) !== 20) {
             user.isActive = true;
             user.activeDate = new Date();
-            user.subcription = package_name;
+            user.subcription = order.package_name;
             await user.save();
+        } else {
+            // Fetch the most recent MonthlyReward for the user
+            const latestRewardDoc = await MonthlyReward.findOne({ user_mySponsor_id: mySponsorId })
+                .sort({ order_date: -1 });
+
+            if (latestRewardDoc) {
+                latestRewardDoc.order_date = new Date(); // Update with current date
+                await latestRewardDoc.save();
+            }
         }
 
         // Create new approved order
@@ -165,14 +218,14 @@ async function createApprovedOrderAndActivateUser(req, res) {
             user_details: {
                 user_object_id: user._id,
                 user_mySponsor_id: user.mySponsorId,
-                user_name: user.name
+                user_name: user.name,
             },
             order_details: {
-                order_price: amount
+                order_price: amount,
             },
             package_name,
             status: "approved",
-            image_url: null
+            image_url: null,
         });
 
         await newOrder.save();
@@ -188,35 +241,49 @@ async function createApprovedOrderAndActivateUser(req, res) {
         // Find the order by sponsor ID and order number
         const order = await UserOrders.findOne({
             "user_details.user_mySponsor_id": mySponsorId,
-            "order_details.order_price": order_price
+            "order_details.order_price": order_price,
         });
 
         if (!order) {
             return res.status(404).json({ message: "Order not found" });
         }
 
-        // Create MonthlyReward if conditions match
-        if (order.package_name === "Premium" && parseFloat(order_price) === 1000) {
+        // Define valid packages and their prices
+        const validPackages = [
+            { name: "kick starter", price: 50 },
+            { name: "bull starter", price: 100 },
+            { name: "whale starter", price: 500 },
+            { name: "Premium", price: 1000 },
+            { name: "bull master", price: 2000 },
+            { name: "whale master", price: 5000 },
+        ];
 
+        // Check if the current package and price are valid
+        const isValidPackage = validPackages.some(
+            (pkg) =>
+                pkg.name.toLowerCase() === order.package_name.toLowerCase() &&
+                pkg.price === parseFloat(order_price)
+        );
+
+        if (isValidPackage) {
             await MonthlyReward.create({
                 user_name: user.name,
                 user_mySponsor_id: mySponsorId,
                 order_price: parseFloat(order_price),
-                package_name,
-                rewards: []  // Initially empty; will be populated monthly
+                package_name: order.package_name,
+                rewards: [], // reward_points will be handled later
             });
         }
 
         res.status(200).json({
-            message: "User activated, order created, and points assigned successfully.",
-            order: newOrder
+            message:
+                "User activated, order created, and points assigned successfully.",
+            order: newOrder,
         });
-
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 }
-
 
 async function getAllOrders(req, res) {
     try {
@@ -243,41 +310,85 @@ async function getAprrovedOrders(req, res) {
 
 function formatDateToDDMMYYYY(date) {
     const d = new Date(date);
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0");
     const year = d.getFullYear();
     return `${day}/${month}/${year}`;
+}
+
+// function formatDateToDDMMYYYY(date) {
+//     const day = String(date.getDate()).padStart(2, "0");
+//     const month = String(date.getMonth() + 1).padStart(2, "0");
+//     const year = date.getFullYear();
+//     return `${day}/${month}/${year}`;
+// }
+
+function isWithinValidity(orderDate, monthsValid) {
+    const now = new Date();
+    const expiryDate = new Date(orderDate);
+    expiryDate.setMonth(expiryDate.getMonth() + monthsValid);
+    return now <= expiryDate;
 }
 
 async function addMonthlyRewards(req, res) {
     try {
         const allRewards = await MonthlyReward.find();
 
+        const rewardPercentages = {
+            "kick starter": { percent: 3, validity: 1 },
+            "bull starter": { percent: 5, validity: 3 },
+            "whale starter": { percent: 8, validity: 12 },
+            "premium": { percent: 10 },
+            "bull master": { percent: 12 },
+            "whale master": { percent: 15 },
+        };
+
+        const todayFormatted = formatDateToDDMMYYYY(new Date());
+
         for (const rewardDoc of allRewards) {
-            const amount = (rewardDoc.order_price * 3) / 100;
+            const packageName = rewardDoc.package_name.toLowerCase();
+            const config = rewardPercentages[packageName];
+            if (!config) continue;
 
-            const todayFormatted = formatDateToDDMMYYYY(new Date());
+            // Check validity if applicable
+            if (config.validity && !isWithinValidity(new Date(rewardDoc.order_date), config.validity)) {
+                continue;
+            }
 
-            // Prevent duplicate entries for the same date
+            // Prevent duplicate entry for today
             const alreadyExists = rewardDoc.rewards.some(
                 (entry) => entry.date === todayFormatted
             );
             if (alreadyExists) continue;
 
+            const amount = (rewardDoc.order_price * config.percent) / 100;
+
             rewardDoc.rewards.push({
                 date: todayFormatted,
                 amount,
-                status: 'pending'
+                status: "pending",
             });
+
+            rewardDoc.reward_points += amount;
 
             await rewardDoc.save();
         }
-        console.log('monthly reward calculate successfully');
+
+        console.log("✅ Monthly rewards updated successfully");
+        if (res) return res.status(200).json({ message: "Monthly rewards updated." });
 
     } catch (error) {
-        console.error('Error adding monthly rewards:', error);
+        console.error("❌ Error adding monthly rewards:", error);
+        if (res) return res.status(500).json({ message: "Internal server error" });
     }
 }
 
 
-module.exports = { createOrder, updateOrderStatus, getAllOrders, getAprrovedOrders, createApprovedOrderAndActivateUser, addMonthlyRewards };
+module.exports = {
+    createOrder,
+    updateOrderStatus,
+    getAllOrders,
+    getAprrovedOrders,
+    createApprovedOrderAndActivateUser,
+    addMonthlyRewards,
+};
