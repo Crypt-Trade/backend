@@ -1,5 +1,5 @@
 const express = require('express');
-const { handleGetAllReferrals, getOrdersBySponsorId, createWithdrawalOrder, getAllWithdrawalOrdersbyId, getWalletAddressBySponsorId, getMonthlyRewardsBySponsorId, addOrUpdateRanking, getAllRankings, updateRankStatus } = require ("../controllers/userController")
+const { handleGetAllReferrals, getOrdersBySponsorId, createWithdrawalOrder, getAllWithdrawalOrdersbyId, getWalletAddressBySponsorId, getMonthlyRewardsBySponsorId, addOrUpdateRanking, getAllRankings, updateRankStatus, createScholarshipOrder } = require ("../controllers/userController")
 const router = express.Router();
 
 
@@ -12,6 +12,7 @@ router.get('/rewards/:sponsorId', getMonthlyRewardsBySponsorId);
 router.post('/ranking', addOrUpdateRanking);
 router.get('/all-rankings', getAllRankings);
 router.put('/update-rank-status', updateRankStatus);
+router.post('/create-scholarship-order', createScholarshipOrder);  // Create scholarship order
 
 
 module.exports = router;

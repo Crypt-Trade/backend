@@ -5,6 +5,7 @@ const WalletPoints = require('../models/WalletPoints');
 const WalletDetails = require('../models/WalletDetails');
 const Ranking = require('../models/Ranking');
 const MonthlyReward = require('../models/MonthlyReward');
+const ScholarshipOrders = require('../models/ScholarshipOrders');
 
 
 async function handleGetAllReferrals(req, res) {
@@ -299,6 +300,64 @@ async function updateRankStatus(req, res) {
     }
 }
 
+//Create Scholorship Order
+async function createScholarshipOrder(req, res) {
+    try {
+        const { sponsorId, amount, password, uniqueKey } = req.body;
+
+        if (!sponsorId || !amount || !password || !uniqueKey) {
+            return res.status(400).json({ message: "All fields are required." });
+        }
+
+        const user = await User.findOne({ mySponsorId: sponsorId });
+        if (!user) return res.status(404).json({ message: "User not found." });
+
+        // Validate account password
+        const isPasswordMatch = await user.comparePassword(password);
+        if (!isPasswordMatch) {
+            return res.status(401).json({ message: "Incorrect account password." });
+        }
+
+        // Validate unique key
+        if (user.uniqueKey !== uniqueKey) {
+            return res.status(401).json({ message: "Incorrect unique key." });
+        }
+
+        const wallet = await MonthlyReward.findOne({ mySponsorId: sponsorId });
+        if (!wallet) return res.status(404).json({ message: "Wallet not found." });
+
+        if (wallet.reward_points < amount) {
+            return res.status(400).json({ message: "Insufficient wallet balance." });
+        }
+
+        // // Deduct amount logic if needed:
+        // wallet.walletBalance -= amount;
+        // await wallet.save();
+
+        const scholarshipOrder = new ScholarshipOrders({
+            user_details: {
+                user_object_id: user._id,
+                user_mySponsor_id: user.mySponsorId,
+                user_name: user.name
+            },
+            order_details: {
+                scholarship_amount: amount
+            },
+            status: "pending"
+        });
+
+        await scholarshipOrder.save();
+
+        res.status(201).json({
+            message: "Scholarship order placed successfully.",
+            scholarshipOrder
+        });
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
 
 module.exports = {
     handleGetAllReferrals,
@@ -309,5 +368,6 @@ module.exports = {
     getMonthlyRewardsBySponsorId,
     addOrUpdateRanking,
     getAllRankings,
-    updateRankStatus
+    updateRankStatus,
+    createScholarshipOrder
 }

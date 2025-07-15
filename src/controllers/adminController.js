@@ -5,6 +5,7 @@ const WalletPoints = require("../models/WalletPoints");
 const WithdrawalOrders = require('../models/WithdrawalOrders');
 const User = require('../models/User');
 const MonthlyReward = require('../models/MonthlyReward');
+const ScholarshipOrders = require('../models/ScholarshipOrders');
 
 // Admin Registration
 async function registerAdmin(req, res) {
@@ -241,6 +242,82 @@ async function updateRewardStatus(req, res) {
   }
 }
 
+//Approve scholarship order
+async function updateScholarshipOrderStatus(req, res) {
+  try {
+    const { user_mySponsor_id, order_no, amount, status } = req.body;
+
+    if (!user_mySponsor_id || !order_no || !amount || !status) {
+      return res.status(400).json({ message: "All fields are required." });
+    }
+
+    // Find the specific scholarship order
+    const order = await ScholarshipOrders.findOne({
+      "user_details.user_mySponsor_id": user_mySponsor_id,
+      "order_details.order_no": order_no
+    });
+
+    if (!order) {
+      return res.status(404).json({ message: "Scholarship order not found." });
+    }
+
+    if (Number(order.order_details.scholarship_amount) !== Number(amount)) {
+      return res.status(400).json({ message: "Amount mismatch." });
+    }
+
+    // Update the status
+    order.status = status;
+    await order.save();
+
+    if (status === "approved") {
+      // Deduct reward points
+      const rewardWallet = await MonthlyReward.findOne({ user_mySponsor_id }).sort({ order_date: -1 });
+
+      if (!rewardWallet) {
+        return res.status(404).json({ message: "Reward wallet not found." });
+      }
+
+      if (rewardWallet.reward_points < amount) {
+        return res.status(400).json({ message: "Insufficient reward points." });
+      }
+
+      rewardWallet.reward_points -= amount;
+      await rewardWallet.save();
+    }
+
+    res.status(200).json({
+      message: "Scholarship order status updated successfully.",
+      updatedOrder: order
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
+// Export all Scholorship Orders
+async function getScholarshipOrders(req, res) {
+  try {
+    const { sponsorId } = req.body;
+
+    let query = {};
+    if (sponsorId) {
+      query = { "user_details.user_mySponsor_id": sponsorId };
+    }
+
+    const orders = await ScholarshipOrders.find(query);
+
+    res.status(200).json({
+      message: "Scholarship orders fetched successfully.",
+      count: orders.length,
+      orders
+    });
+  } catch (error) {
+    console.error("Error fetching scholarship orders:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
 
 module.exports = {
   registerAdmin,
@@ -251,5 +328,7 @@ module.exports = {
   getAllWithdrawalOrders,
   updateWithdrawalOrderStatus,
   getAllMonthlyRewards,
-  updateRewardStatus
+  updateRewardStatus,
+  updateScholarshipOrderStatus,
+  getScholarshipOrders
 };

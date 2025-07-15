@@ -140,12 +140,12 @@ async function updateOrderStatus(req, res) {
 
         // Define valid packages and their prices
         const validPackages = [
-            { name: "kick starter", price: 50 },
-            { name: "bull starter", price: 100 },
-            { name: "whale starter", price: 500 },
-            { name: "Premium", price: 1000 },
-            { name: "bull master", price: 2000 },
-            { name: "whale master", price: 5000 },
+            { name: "Kick Starter", price: 50 },
+            { name: "Bull Starter", price: 100 },
+            { name: "Whales Starter", price: 500 },
+            { name: "Premium Master Trader Course", price: 1000 },
+            { name: "Bull Master Trader Course", price: 2000 },
+            { name: "Whales Master Trader Course", price: 5000 },
         ];
 
         // Check if the current package and price are valid
@@ -200,7 +200,7 @@ async function createApprovedOrderAndActivateUser(req, res) {
         if (parseFloat(order_price) !== 20) {
             user.isActive = true;
             user.activeDate = new Date();
-            user.subcription = order.package_name;
+            user.subcription = package_name;
             await user.save();
         } else {
             // Fetch the most recent MonthlyReward for the user
@@ -250,12 +250,12 @@ async function createApprovedOrderAndActivateUser(req, res) {
 
         // Define valid packages and their prices
         const validPackages = [
-            { name: "kick starter", price: 50 },
-            { name: "bull starter", price: 100 },
-            { name: "whale starter", price: 500 },
-            { name: "Premium", price: 1000 },
-            { name: "bull master", price: 2000 },
-            { name: "whale master", price: 5000 },
+            { name: "Kick Starter", price: 50 },
+            { name: "Bull Starter", price: 100 },
+            { name: "Whales Starter", price: 500 },
+            { name: "Premium Master Trader Course", price: 1000 },
+            { name: "Bull Master Trader Course", price: 2000 },
+            { name: "Whales Master Trader Course", price: 5000 },
         ];
 
         // Check if the current package and price are valid
@@ -335,12 +335,12 @@ async function addMonthlyRewards(req, res) {
         const allRewards = await MonthlyReward.find();
 
         const rewardPercentages = {
-            "kick starter": { percent: 3, validity: 1 },
-            "bull starter": { percent: 5, validity: 3 },
-            "whale starter": { percent: 8, validity: 12 },
-            "premium": { percent: 10 },
-            "bull master": { percent: 12 },
-            "whale master": { percent: 15 },
+            "Kick Starter": { percent: 3, validity: 1 },
+            "Bull Starter": { percent: 5, validity: 3 },
+            "Whales Starter": { percent: 8, validity: 12 },
+            "Premium Master Trader Course": { percent: 10 },
+            "Bull Master Trader Course": { percent: 12 },
+            "Whales Master Trader Course": { percent: 15 },
         };
 
         const todayFormatted = formatDateToDDMMYYYY(new Date());
