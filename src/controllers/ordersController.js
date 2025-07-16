@@ -329,56 +329,41 @@ function isWithinValidity(orderDate, monthsValid) {
     expiryDate.setMonth(expiryDate.getMonth() + monthsValid);
     return now <= expiryDate;
 }
-
 async function addMonthlyRewards(req, res) {
     try {
         const allRewards = await MonthlyReward.find();
-
         const rewardPercentages = {
-            "Kick Starter": { percent: 3, validity: 1 },
-            "Bull Starter": { percent: 5, validity: 3 },
-            "Whales Starter": { percent: 8, validity: 12 },
-            "Premium Master Trader Course": { percent: 10 },
-            "Bull Master Trader Course": { percent: 12 },
-            "Whales Master Trader Course": { percent: 15 },
+            "kick starter": { percent: 3, validity: 1 },
+            "bull starter": { percent: 5, validity: 3 },
+            "whales starter": { percent: 8, validity: 12 },
+            "premium master trader course": { percent: 10 },
+            "bull master trader course": { percent: 12 },
+            "whales master trader course": { percent: 15 },
         };
-
         const todayFormatted = formatDateToDDMMYYYY(new Date());
-
-        for (const rewardDoc of allRewards) {
-            const packageName = rewardDoc.package_name.toLowerCase();
-            const config = rewardPercentages[packageName];
-            if (!config) continue;
-
-            // Check validity if applicable
-            if (config.validity && !isWithinValidity(new Date(rewardDoc.order_date), config.validity)) {
+        for (const doc of allRewards) {
+            const pkgName = (doc.package_name || "").toLowerCase();
+            const rewardConfig = rewardPercentages[pkgName];
+            if (!rewardConfig) continue;
+            // Check validity if defined
+            if (rewardConfig.validity && !isWithinValidity(new Date(doc.order_date), rewardConfig.validity)) {
                 continue;
             }
-
-            // Prevent duplicate entry for today
-            const alreadyExists = rewardDoc.rewards.some(
-                (entry) => entry.date === todayFormatted
-            );
-            if (alreadyExists) continue;
-
-            const amount = (rewardDoc.order_price * config.percent) / 100;
-
-            rewardDoc.rewards.push({
+            // Skip if today's reward already exists
+            const rewardAlreadyAdded = doc.rewards.some(r => r.date === todayFormatted);
+            if (rewardAlreadyAdded) continue;
+            const rewardAmount = (doc.order_price * rewardConfig.percent) / 100;
+            doc.rewards.push({
                 date: todayFormatted,
-                amount,
-                status: "pending",
+                amount: rewardAmount,
             });
-
-            rewardDoc.reward_points += amount;
-
-            await rewardDoc.save();
+            doc.reward_points += rewardAmount;
+            await doc.save();
         }
-
-        console.log("✅ Monthly rewards updated successfully");
+        console.log("Monthly rewards updated successfully");
         if (res) return res.status(200).json({ message: "Monthly rewards updated." });
-
     } catch (error) {
-        console.error("❌ Error adding monthly rewards:", error);
+        console.error("Error adding monthly rewards:", error);
         if (res) return res.status(500).json({ message: "Internal server error" });
     }
 }

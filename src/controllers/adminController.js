@@ -297,6 +297,7 @@ async function updateScholarshipOrderStatus(req, res) {
 
 // Export all Scholorship Orders
 async function getScholarshipOrders(req, res) {
+  console.log("Fetching scholarship orders...");
   try {
     const { sponsorId } = req.body;
 

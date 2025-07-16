@@ -4,8 +4,8 @@ const WithdrawalOrders = require('../models/WithdrawalOrders');
 const WalletPoints = require('../models/WalletPoints');
 const WalletDetails = require('../models/WalletDetails');
 const Ranking = require('../models/Ranking');
-const MonthlyReward = require('../models/MonthlyReward');
 const ScholarshipOrders = require('../models/ScholarshipOrders');
+const MonthlyReward = require('../models/MonthlyReward');
 
 
 async function handleGetAllReferrals(req, res) {
@@ -323,7 +323,7 @@ async function createScholarshipOrder(req, res) {
             return res.status(401).json({ message: "Incorrect unique key." });
         }
 
-        const wallet = await MonthlyReward.findOne({ mySponsorId: sponsorId });
+        const wallet = await MonthlyReward.findOne({ user_mySponsor_id: sponsorId });
         if (!wallet) return res.status(404).json({ message: "Wallet not found." });
 
         if (wallet.reward_points < amount) {

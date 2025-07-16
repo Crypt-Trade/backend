@@ -4,7 +4,6 @@ const mongoose = require("mongoose");
 const rewardEntrySchema = new mongoose.Schema({
   date: { type: String, required: true }, // Format: dd/mm/yyyy
   amount: { type: Number, required: true },
-  status: { type: String, default: "pending" }, // or 'paid', etc.
 });
 
 const monthlyRewardSchema = new mongoose.Schema({
