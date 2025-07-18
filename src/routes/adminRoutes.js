@@ -18,6 +18,6 @@ router.post('/update-userwallet-status', updateWithdrawalOrderStatus);
 router.get('/get-all-monthly-rewards', getAllMonthlyRewards);
 router.put('/update-reward-status', updateRewardStatus);
 router.post('/update-scholarship-order-status', updateScholarshipOrderStatus); // Update scholarship order status
-router.get('/get-scholarship-orders', getScholarshipOrders); // Get all scholarship orders
+router.post('/get-scholarship-orders', getScholarshipOrders); // Get all scholarship orders
 
 module.exports = router;

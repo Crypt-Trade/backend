@@ -266,8 +266,8 @@ async function updateScholarshipOrderStatus(req, res) {
     }
 
     // Update the status
-    order.status = status;
-    await order.save();
+    // order.status = status;
+    // await order.save();
 
     if (status === "approved") {
       // Deduct reward points
@@ -283,6 +283,9 @@ async function updateScholarshipOrderStatus(req, res) {
 
       rewardWallet.reward_points -= amount;
       await rewardWallet.save();
+
+      order.status = status;
+      await order.save();
     }
 
     res.status(200).json({
